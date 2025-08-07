@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aiagent-ingress # Ingress 리소스의 이름 ( 클러스터 내 중복 불가)
+  namespace: dev-aiagent
+  labels:
+    app.kubernetes.io/name: aiagent-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing # ALB를 퍼블릭으로 생성 (internet-facing), 내부용은 "internal"
+    alb.ingress.kubernetes.io/target-type: ip # 타겟을 파드의 IP로 지정 (타겟 타입: ip 또는 instance)
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]' # HTTPS 트래픽을 받기 위한 포트 설정 (ALB에서 443 리슨)
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:123456789012:certificate/abcd-1234... # ACM 인증서 연결 (ACM에서 발급받은 ARN 넣기)
+    alb.ingress.kubernetes.io/ssl-redirect: '443' # HTTP 요청이 오면 자동으로 HTTPS(443)로 리다이렉션
+spec:
+  ingressClassName: alb # ALB Ingress Controller가 처리해야 함을 명시 (IngressClass 리소스 이름)
+  rules:  #  라우팅 정의
+  - host: aiagent-new.nextpay.co.kr
+    http:
+      paths:
+      - pathType: Prefix  # 접두어 기반 매칭 (예: /api, /admin도 포함)
+        path: "/" # 모든 경로
+        backend:
+          service:
+            name: aiagent-service # 라우팅 대상 Service 오브젝트 메타데이터 이름
+            port: 
+              number: 80          # 서비스가 노출하는 포트
+  - host: aiagent-new-system.nextpay.co.kr
+    http:
+      paths:
+      - pathType: Prefix  # 접두어 기반 매칭 (예: /api, /admin도 포함)
+        path: "/" # 모든 경로
+        backend:
+          service:
+            name: aiagent-system-service # 라우팅 대상 Service 오브젝트 메타데이터 이름
+            port: 
+              number: 80          # 서비스가 노출하는 포트
+  - host: aiagent-new-api.nextpay.co.kr
+    http:
+      paths:
+      - pathType: Prefix  # 접두어 기반 매칭 (예: /api, /admin도 포함)
+        path: "/" # 모든 경로
+        backend:
+          service:
+            name: aiagent-api-service # 라우팅 대상 Service 오브젝트 메타데이터 이름
+            port: 
+              number: 80          # 서비스가 노출하는 포트

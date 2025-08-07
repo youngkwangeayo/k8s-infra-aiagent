@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiagent-system-config
+  namespace: dev-aiagent
+  labels:
+    app.kubernetes.io/name: aiagent-system-config
+    app.kubernetes.io/app: aiagent-system-config
+    app.kubernetes.io/version: "1"
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 2 # 팟 몇개를 생성할건지
+  strategy: # 애플리케이션을 배포(업데이트)할 때 어떤 방식으로 Pod를 교체할지 정의
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1 # 새 팟 생성
+      maxUnavailable: 1 # 생성되면 교체로 꺼질 팟 수
+  selector: # 이 Deployment가 관리할 Pod를 선택하는 기준
+    matchLabels:
+      app: aiagent-system-config
+      component: frontend
+  template: # 실제 생성될 Pod의 템플릿 정의
+    metadata: # pod의 라벨링 service 가 Pod 라벨로 찾아감
+      labels:
+        app: aiagent-system-config
+        component: frontend
+    spec:
+      containers: # 팟 내부  컨테이너 설정
+        - name: aiagent-system-config
+          image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-system-config:0.1.9
+          resources: # (CPU/메모리 요청 및 제한)
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
+          startupProbe: # 처음 뜰 때까지 보호
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 5
+            failureThreshold: 12   # 최대 1분까지 대기 (5 * 12)
+          readinessProbe: # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+            httpGet:
+              path: /
+              port: 80
+              initialDelaySeconds: 5 # 첫 체크 전 대기 시간
+              periodSeconds: 10 # 체크 간격 (기본 10초)
+              failureThreshold: 3 # 몇 번 실패하면 'Not Ready'
+              timeoutSeconds: 5
+          livenessProbe:  ##앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 80
+          volumeMounts: # 컨테이너 볼륨 마운트
+            - mountPath: /usr/src/app/conf  # 여기에 마운트됨 도커파일 WORKDIR 경로확인
+              name: config-volume
+              readOnly: true
+      volumes:  #팟의 볼륨 생성
+        - name: config-volume
+          configMap:
+            name: aiagent-system-config  
+            items:
+              - key: config.json
+                path: config.json   # 실제로 /usr/src/app/conf/config.json 으로 보임    

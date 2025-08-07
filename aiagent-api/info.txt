@@ -1,0 +1,10 @@
+
+# aiagent-api (백엔드 앱서버)
+
+ - aiagent-api-deployment.yaml – Deployment (레플리카 수, 이미지, 환경변수 등 포함)
+ 
+ - aiagent-api-service.yaml – Service (ClusterIP 또는 LoadBalancer)
+  
+ - aiagent-api-configmap.yaml (선택) – 설정파일 분리 시
+  
+ - aiagent-api-secret.yaml (선택) – DB 인증 정보 등

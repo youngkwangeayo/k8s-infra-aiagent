@@ -1,0 +1,8 @@
+
+# aiagent-system (프론트 앱서버)
+
+- aiagent-system-deployment.yaml
+
+- aiagent-system-service.yaml
+
+- aiagent-system-ingress.yaml (URL path: /system 등으로 분기할 경우)

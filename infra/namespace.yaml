@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev-aiagent
+  labels:
+    app.kubernetes.io/name: dev-aiagent
+    app.kubernetes.io/version: "1"

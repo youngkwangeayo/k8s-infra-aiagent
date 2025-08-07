@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aiagent-config
+  namespace: dev-aiagent
+  labels:
+    app.kubernetes.io/name: aiagent
+    app.kubernetes.io/app: aiagent
+    app.kubernetes.io/version: "1"
+    app.kubernetes.io/component: frontend
+data:
+  configjson: |
+    {
+      "NODE_ENV":"local",
+    }

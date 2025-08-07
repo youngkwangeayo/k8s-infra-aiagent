@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aiage-service
+spec:
+  selector:
+    app: aiagent
+  ports:
+    - name: http
+      port: 80           # 클러스터 내부에서 서비스가 노출할 포트
+      targetPort: 80     # pod 내부의 컨테이너 포트
+  type: ClusterIP        # 내부에서만 사용 (Ingress 통해 외부 노출 예정)

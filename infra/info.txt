@@ -1,0 +1,7 @@
+1. 공통 인프라
+namespace.yaml – 네임스페이스 정의 (예: aiagent 네임스페이스)
+
+ingress.yaml – 전체 ingress 설정 (ALB 연동 포함)
+
+
+

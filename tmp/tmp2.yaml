@@ -1,0 +1,32 @@
+apiVersion: apps/v1                 # Deployment 리소스는 apps 그룹의 v1 버전을 사용
+kind: Deployment                    # 리소스 종류는 Deployment (무중단 배포 및 레플리카 관리 목적)
+metadata:
+  name: aiagent                     # Deployment 이름 (해당 네임스페이스 내에서 고유)
+  namespace: dev-aiagent            # 배포할 네임스페이스 (Namespace 리소스에서 미리 정의되어 있어야 함)
+  labels:                           # 이 리소스 자체에 붙는 라벨들
+    app.kubernetes.io/name: aiagent        # 애플리케이션 이름 (공식 권장 라벨)
+    app.kubernetes.io/version: "1"         # 버전 정보 (선택적)
+    app.kubernetes.io/component: frontend  # 컴포넌트 유형 (frontend/backend 등)
+
+spec:
+  selector:                         # 이 Deployment가 관리할 Pod를 선택하는 기준
+    matchLabels:
+      app: aiagent                  # 아래 템플릿의 labels 중 이 값을 가진 Pod를 관리 대상으로 함
+
+  template:                         # 실제 생성될 Pod의 템플릿 정의
+    metadata:
+      labels:
+        app: myapp                  # 생성될 Pod에 붙는 라벨 (⚠️ selector와 불일치 시 에러 발생 가능)
+    spec:
+      containers:
+        - name: myapp              # 컨테이너 이름 (Pod 내 고유)
+          image: <Image>           # 사용할 컨테이너 이미지 (예: nginx:latest 또는 ghcr.io/your/app:tag)
+          resources:               # 리소스 제한 (컨테이너가 사용할 수 있는 최대 자원)
+            limits:
+              memory: "128Mi"      # 메모리 최대 128MiB
+              cpu: "500m"          # CPU 최대 0.5코어 (500 millicore)
+            requests:
+              memory: "64Mi"       # 최소 64MiB 메모리 요청
+              cpu: "250m"          # 최소 0.25코어 (250 millicore) 요청
+          ports:
+            - containerPort: <Port> # 컨테이너에서 노출할 포트 (예: 80, 8080 등)

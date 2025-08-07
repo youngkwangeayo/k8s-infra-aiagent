@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiagent
+  namespace: dev-aiagent
+  labels:
+    app.kubernetes.io/name: aiagent
+    app.kubernetes.io/version: "1"
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 2                               # 운영에서는 최소 2개 이상 레플리카 권장
+  selector:
+    matchLabels:
+      app: aiagent                          # 반드시 template.labels 와 일치해야 함
+  strategy:
+    type: RollingUpdate                     # 기본값이지만 명시함
+    rollingUpdate:
+      maxSurge: 1                           # 새 Pod 최대 1개 추가
+      maxUnavailable: 1                     # 동시에 내려갈 수 있는 Pod 수
+  template:
+    metadata:
+      labels:
+        app: aiagent                        # Selector와 일치시킴
+    spec:
+      containers:
+        - name: aiagent
+          image: ghcr.io/your-org/aiagent:1.0.0       # 실제 운영 이미지
+          imagePullPolicy: IfNotPresent               # 필요 시 Always로 변경
+          ports:
+            - containerPort: 8080                     # 서비스 내부 포트
+          resources:
+            requests:
+              memory: "64Mi"                          # 최소 확보 메모리
+              cpu: "250m"                             # 최소 확보 CPU
+            limits:
+              memory: "128Mi"                         # 최대 메모리 제한
+              cpu: "500m"                             # 최대 CPU 제한
+          env:
+            - name: NODE_ENV
+              value: production                       # 런타임 환경
+          readinessProbe:                             # 서비스 트래픽 받기 전 체크
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:                              # 컨테이너 살아있는지 체크
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 5

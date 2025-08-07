@@ -1,0 +1,5 @@
+# aiagent (프론트 앱서버)
+
+- aiagent-deployment.yaml
+- aiagent-service.yaml
+- aiagent-ingress.yaml (URL path: / 등 기본 루트로 분기할 경우)

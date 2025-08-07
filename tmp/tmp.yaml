@@ -1,0 +1,181 @@
+# aiagent-api 애플리케이션 배포
+apiVersion: apps/v1                 # Kubernetes API 버전
+kind: Deployment                    # 배포 리소스 타입
+metadata:
+  name: aiagent-api                 # 배포 이름
+  namespace: dev                    # 배포할 네임스페이스
+  labels:                           # 배포 라벨
+    app: aiagent-api
+    tier: backend
+spec:
+  replicas: 2                       # API 서버는 2개 실행
+  strategy:                         # 배포 전략 정의
+    type: RollingUpdate             # 롤링 업데이트 방식
+    rollingUpdate:
+      maxSurge: 1                   # 업데이트 시 최대 1개 추가 파드 생성 가능
+      maxUnavailable: 0             # 업데이트 시 사용 불가능한 파드 0개 유지
+  selector:                         # 어떤 파드를 관리할지 선택
+    matchLabels:
+      app: aiagent-api
+  template:                         # 파드 템플릿 정의
+    metadata:
+      labels:                       # 파드에 붙을 라벨
+        app: aiagent-api
+        tier: backend
+    spec:                           # 파드 스펙 정의
+      containers:                   # 컨테이너 목록
+      - name: aiagent-api           # 컨테이너 이름
+        # ECR에서 API 이미지 가져오기
+        image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-api:0.1.9
+        ports:                      # 컨테이너가 노출할 포트
+        - containerPort: 8080       # 애플리케이션이 실행되는 내부 포트
+          name: http                # 포트 이름
+          
+        # 환경 변수 설정
+        envFrom:                    # ConfigMap에서 모든 환경변수 가져오기
+        - configMapRef:
+            name: aiagent-config
+        env:                        # 개별 환경변수 설정
+        # API 서버는 더 많은 외부 서비스와 연결
+        - name: OPENAI_API_KEY      # OpenAI API 키 환경변수
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: openai-api-key
+        - name: AWS_ACCESS_KEY_ID   # AWS 액세스 키 ID
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets  
+              key: aws-access-key-id
+        - name: AWS_SECRET_ACCESS_KEY # AWS 시크릿 액세스 키
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: aws-secret-access-key
+        - name: MYSQL_HOST          # MySQL 호스트 주소
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: mysql-host
+        - name: MYSQL_USER          # MySQL 사용자명
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: mysql-user
+        - name: MYSQL_PASSWORD      # MySQL 비밀번호
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: mysql-password
+        - name: RABBITMQ_USERNAME   # RabbitMQ 사용자명
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: rabbitmq-username
+        - name: RABBITMQ_PASSWORD   # RabbitMQ 비밀번호
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: rabbitmq-password
+        - name: WEATHER_API_KEY     # 날씨 API 키
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: weather-api-key
+        - name: MTS_AUTH_CODE       # MTS 인증 코드
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: mts-auth-code
+        - name: MTS_SENDER_KEY      # MTS 발송자 키
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: mts-sender-key
+        - name: STEPPAY_PAYMENT_KEY # StepPay 결제 키
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: steppay-payment-key
+        - name: STEPPAY_SECRET_TOKEN # StepPay 시크릿 토큰
+          valueFrom:
+            secretKeyRef:
+              name: aiagent-secrets
+              key: steppay-secret-token
+              
+        # API 서버는 더 많은 리소스 필요
+        resources:                  # 리소스 요청 및 제한 설정
+          requests:                 # 최소 필요한 리소스
+            memory: "384Mi"         # 데이터베이스 연결 풀 고려
+            cpu: "200m"             # 0.2 코어 요청
+          limits:                   # 최대 사용 가능한 리소스
+            memory: "768Mi"         # 트래픽 급증 대비
+            # CPU 제한 없음 (API 응답 시간 최적화)
+            
+        # API 서버는 초기화 시간이 더 오래 걸림
+        startupProbe:               # 시작 준비 상태 확인
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 15   # API 초기화를 위해 더 긴 대기
+          periodSeconds: 5          # 5초마다 체크
+          timeoutSeconds: 5         # 5초 타임아웃
+          failureThreshold: 20      # 100초 동안 시작 대기
+          
+        livenessProbe:              # 생존 상태 확인
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30   # 30초 후 시작
+          periodSeconds: 30         # API 안정성을 위해 더 긴 간격
+          timeoutSeconds: 10        # 10초 타임아웃
+          failureThreshold: 3       # 3번 실패시 재시작
+        
+        readinessProbe:             # 준비 상태 확인
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10   # 10초 후 시작
+          periodSeconds: 5          # 5초마다 체크
+          timeoutSeconds: 5         # 5초 타임아웃
+          failureThreshold: 3       # 3번 실패시 트래픽 제외
+          successThreshold: 1       # 1번 성공시 트래픽 포함
+          
+        # 볼륨 마운트
+        volumeMounts:               # 볼륨을 컨테이너에 마운트
+        - name: app-config          # 애플리케이션 설정 파일 볼륨
+          mountPath: /usr/src/app/conf
+          readOnly: true            # 읽기 전용으로 마운트
+        - name: app-logs            # 애플리케이션 로그 볼륨
+          mountPath: /usr/src/app/log
+          
+      imagePullSecrets:             # 이미지 풀을 위한 시크릿
+      - name: ecr-secret            # ECR 접근을 위한 시크릿
+      
+      volumes:                      # 파드에서 사용할 볼륨 정의
+      - name: app-config            # 설정 파일 볼륨
+        configMap:
+          name: aiagent-app-config  # ConfigMap에서 설정 가져오기
+      - name: app-logs              # 로그 파일 볼륨
+        emptyDir: {}                # 임시 디렉토리 생성
+          
+      securityContext:              # 보안 컨텍스트 설정
+        runAsNonRoot: true          # root 사용자가 아닌 사용자로 실행
+        runAsUser: 1001             # 사용자 ID 1001로 실행
+        fsGroup: 2001               # 파일시스템 그룹 ID 2001
+
+---
+# aiagent-api 서비스
+apiVersion: v1                      # Kubernetes API 버전
+kind: Service                       # 서비스 리소스 타입
+metadata:
+  name: aiagent-api-service         # 서비스 이름
+  namespace: dev                    # 서비스가 생성될 네임스페이스
+  labels:                           # 서비스 라벨
+    app: aiagent-api
+spec:
+  selector:                         # 어떤 파드를 대상으로 할지 선택
+    app: aiagent-api
+  ports:                            # 서비스가 노출할 포트 설정
+  - port: 3400                      # 기존 포트 유지 (서비스 외부 포트)
+    targetPort: 8080                # 파드 내부 포트로 트래픽 전달
+    protocol: TCP                   # TCP 프로토콜 사용
+    name: http                      # 포트 이름
+  type: ClusterIP                   # 클러스터 내부에서만 접근 가능한 서비스

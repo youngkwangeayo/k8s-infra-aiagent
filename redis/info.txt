@@ -1,0 +1,10 @@
+
+# redis
+
+redis-deployment.yaml (또는 StatefulSet, 필요 시)
+
+redis-service.yaml (type: ClusterIP)
+
+redis-configmap.yaml (선택) – 비밀번호 및 포트 설정 등
+
+redis-secret.yaml (선택) – 비밀번호 분리할 경우
