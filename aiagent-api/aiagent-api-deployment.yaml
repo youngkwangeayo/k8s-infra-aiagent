@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent-api
+  name: aiagent-api
   namespace: dev-aiagent
   labels:
-    app.kubernetes.io/name: agent-api
-    app.kubernetes.io/app: agent-api
+    app.kubernetes.io/name: aiagent-api
+    app.kubernetes.io/app: aiagent-api
     app.kubernetes.io/version: "1"
     app.kubernetes.io/component: backend
 spec:

@@ -4,8 +4,8 @@ metadata:
   name: aiagent-api-config
   namespace: dev-aiagent
   labels:
-    app.kubernetes.io/name: agent-api
-    app.kubernetes.io/app: agent-api
+    app.kubernetes.io/name: aiagent-api
+    app.kubernetes.io/app: aiagent-api
     app.kubernetes.io/version: "1"
     app.kubernetes.io/component: backend
 data:

@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aiagent-system-config
+  name: aiagent-system
   namespace: dev-aiagent
   labels:
-    app.kubernetes.io/name: aiagent-system-config
-    app.kubernetes.io/app: aiagent-system-config
+    app.kubernetes.io/name: aiagent-system
+    app.kubernetes.io/app: aiagent-system
     app.kubernetes.io/version: "1"
     app.kubernetes.io/component: frontend
 spec:
@@ -17,17 +17,17 @@ spec:
       maxUnavailable: 1 # 생성되면 교체로 꺼질 팟 수
   selector: # 이 Deployment가 관리할 Pod를 선택하는 기준
     matchLabels:
-      app: aiagent-system-config
+      app: aiagent-system
       component: frontend
   template: # 실제 생성될 Pod의 템플릿 정의
     metadata: # pod의 라벨링 service 가 Pod 라벨로 찾아감
       labels:
-        app: aiagent-system-config
+        app: aiagent-system
         component: frontend
     spec:
       containers: # 팟 내부  컨테이너 설정
-        - name: aiagent-system-config
-          image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-system-config:0.1.9
+        - name: aiagent-system
+          image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-system:0.1.9
           resources: # (CPU/메모리 요청 및 제한)
             requests:
               cpu: "100m"
