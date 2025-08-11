@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/version: "1"
     app.kubernetes.io/component: frontend
 data:
-  configjson: |
-    {
+  config.js: |
+    export default {
       "NODE_ENV":"local",
-    }
+    };

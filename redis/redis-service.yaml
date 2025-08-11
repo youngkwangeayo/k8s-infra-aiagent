@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: dev-aiagent
+spec:
+  selector:
+    app: redis  # Deployment의 app: redis와 연결
+  ports:
+    - protocol: TCP
+      port: 6379         # 클러스터 내에서 접근할 포트
+      targetPort: 6379   # Redis 컨테이너 내부 포트
+  type: ClusterIP        # 기본값 (내부 서비스용)

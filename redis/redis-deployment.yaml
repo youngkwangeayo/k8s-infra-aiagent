@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: dev-aiagent
+  labels:
+    app: redis
+spec:
+  replicas: 1  # Redis는 상태 저장이라 보통 1개만 사용
+  strategy:   # 업데이트 시 기존 것을 완전히 삭제 후 새로 생성
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      # 볼륨 권한 설정 - EBS 볼륨을 redis 사용자가 읽고 쓸 수 있도록 설정
+      securityContext:
+        fsGroup: 999  # redis 그룹 ID로 볼륨 소유권 변경 (공식 Redis 이미지의 기본 그룹)
+      containers:
+        - name: redis
+          image: redis:latest  # 최신 Redis 이미지 사용
+          # 컨테이너 보안 설정 - redis 사용자로 실행
+          securityContext:
+            runAsUser: 999  # redis 사용자 ID로 컨테이너 실행 (공식 Redis 이미지의 기본 사용자)
+          resources:   # 리소스 제한 (너무 많은 자원을 사용하지 않도록)
+            requests:
+              cpu: "100m"         # 최소 0.1 CPU 요청
+              memory: "128Mi"     # 최소 128MB 메모리 요청
+            limits:
+              cpu: "500m"         # 최대 0.5 CPU 사용 제한
+              memory: "256Mi"     # 최대 256MB 메모리 제한
+          args: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]  # AOF 방식으로 영속성 설정
+          ports:
+            - containerPort: 6379
+          readinessProbe: # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+            initialDelaySeconds: 5    # 시작 후 5초 뒤부터 확인
+            periodSeconds: 5          # 5초마다 확인
+            exec:
+              command:
+              - redis-cli
+              - ping
+          livenessProbe:  ##앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 20   # 시작 후 20초 뒤부터 확인
+            periodSeconds: 10         # 10초마다 확인
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /data   # Redis가 데이터를 저장할 위치
+              name: redis-storage
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc  # PVC 이름과 연결

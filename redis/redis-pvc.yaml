@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: dev-aiagent
+spec:
+  accessModes:
+    - ReadWriteOnce  # 하나의 노드에서만 읽기/쓰기 가능 (EBS 제약)
+  storageClassName: gp3  # infra/storageclass-gp3.yaml에 정의된 gp3 사용
+  resources:
+    requests:
+      storage: 5Gi  # Redis 디스크 용량 요청 (필요시 조정)

@@ -18,16 +18,14 @@ spec:
   selector: # 이 Deployment가 관리할 Pod를 선택하는 기준
     matchLabels:
       app: aiagent
-      component: frontend
   template: # 실제 생성될 Pod의 템플릿 정의
     metadata: # pod의 라벨링 service 가 Pod 라벨로 찾아감
       labels:
         app: aiagent
-        component: frontend
     spec:
       containers: # 팟 내부  컨테이너 설정
         - name: aiagent
-          image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-api:0.1.9
+          image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent:0.1.0
           resources: # (CPU/메모리 요청 및 제한)
             requests:
               cpu: "100m"
@@ -45,10 +43,10 @@ spec:
             httpGet:
               path: /
               port: 80
-              initialDelaySeconds: 5 # 첫 체크 전 대기 시간
-              periodSeconds: 10 # 체크 간격 (기본 10초)
-              failureThreshold: 3 # 몇 번 실패하면 'Not Ready'
-              timeoutSeconds: 5
+            initialDelaySeconds: 5 # 첫 체크 전 대기 시간
+            periodSeconds: 10 # 체크 간격 (기본 10초)
+            failureThreshold: 3 # 몇 번 실패하면 'Not Ready'
+            timeoutSeconds: 5
           livenessProbe: #앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
             httpGet:
               path: /
@@ -67,5 +65,5 @@ spec:
           configMap:
             name: aiagent-config  
             items:
-              - key: config.json
-                path: config.json   # 실제로 /usr/src/app/conf/config.json 으로 보임
+              - key: config.js     # ConfigMap의 키 이름
+                path: config.js   # 실제로 /usr/src/app/conf/config.js 으로 보임

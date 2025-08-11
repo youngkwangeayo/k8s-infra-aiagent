@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: aiage-service
+  name: aiagent-service
   namespace: dev-aiagent
 spec:
   selector:

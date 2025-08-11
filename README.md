@@ -118,3 +118,21 @@ Fluent Bit, Fluentd
 클러스터 내부       	|  Service (type: ClusterIP)   |	 동일 라벨 파드들로 부하 분산
 노드 내부       	   |  kube-proxy	                |  실제로 파드로 라우팅되는 네트워크 설정 (iptables/IPVS 기반)
 파드 ->  앱         | 	파드	                       |  실제 앱이 요청 처리
+
+
+# 노드 오토스케일링 구성
+Cluster Autoscaler 깔아야함
+Pod가 요청한 자원이 현재 노드들에서 부족한 경우
+
+
+# 팁 get pods 명령시 레디와 스테이터스
+STATUS != Running일 때 가능한 상태와 원인들
+STATUS	주요 원인	관련 Probe
+Pending	아직 스케줄링 중 (노드 부족, PVC 대기 등)	❌ readinessProbe 실행되지 않음
+ContainerCreating	이미지 Pull 중, Volume attach 중 등	❌ readinessProbe 실행 전
+CrashLoopBackOff	컨테이너가 계속 죽음	⛔ livenessProbe 실패 가능성 높음
+Error	컨테이너 내부 오류로 종료	없음
+Terminating	삭제 중	없음
+Running이지만 READY는 0/1	컨테이너는 살아있지만 준비 상태 아님	✅ 이 때가 readinessProbe 실패 상태
+
+READY: 0/1 → readinessProbe 실패 

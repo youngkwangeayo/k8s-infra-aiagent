@@ -9,7 +9,8 @@ metadata:
     app.kubernetes.io/version: "1"
     app.kubernetes.io/component: backend
 data:
-  configjson: |
+  config.json: |
     {
       "serviceEnv": "DEV",
+      "ports": [80],
     }
