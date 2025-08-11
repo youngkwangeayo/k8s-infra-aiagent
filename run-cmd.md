@@ -9,6 +9,8 @@
 ## 0. 인프라 확인
 
 ```bash
+# 전체 클러스타확인
+kubectl config get-contexts
 # 현재 클러스터확인
 kubectl config current-context
 # 클러스터에 접속할수있도록 로컬 큐브컨피그에 등록
@@ -104,8 +106,12 @@ kubectl get ingress -n dev-aiagent
 kubectl describe ingress aiagent-ingress -n dev-aiagent
 ```
 
+## 6. pod 오토스케일전략
+```bash
+kubectl apply -f infra/hpa.yaml
+```
 
-## 6. 상태 확인
+## 7. 상태 확인
 
 ```bash
 
@@ -125,7 +131,7 @@ kubectl describe ingress aiagent-ingress -n dev-aiagent
 
 ---
 
-## 7. 로그 확인 (문제 발생 시)
+## 8. 로그 확인 (문제 발생 시)
 
 ```bash
 
@@ -151,7 +157,7 @@ kubectl rollout restart deployment/{metaName} -n dev-aiagent
 
 ---
 
-## 8. 리소스 정리 (테스트 클러스터에서)
+## 9. 리소스 정리 (테스트 클러스터에서)
 
 ```bash
 kubectl delete namespace dev-aiagent

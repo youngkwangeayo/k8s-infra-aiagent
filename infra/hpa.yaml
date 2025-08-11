@@ -1,0 +1,139 @@
+# HorizontalPodAutoscaler (HPA) 설정
+# Pod 수를 CPU/메모리 사용률에 따라 자동으로 조절하는 오토스케일러
+
+apiVersion: autoscaling/v2  # HPA v2 API 사용 (CPU + 메모리 + 고급 기능 지원)
+kind: HorizontalPodAutoscaler
+metadata:
+  name: aiagent-hpa
+  namespace: dev-aiagent
+spec:
+  # 스케일링 대상 지정
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: aiagent  # aiagent Deployment를 대상으로 함
+  
+  # Pod 수 범위 설정
+  minReplicas: 1    # 최소 Pod 수 (트래픽이 없어도 1개는 유지)
+  maxReplicas: 5   # 최대 Pod 수 (아무리 바빠도 10개를 넘지 않음)
+  
+  # 스케일링 기준 메트릭 정의
+  metrics:
+  - type: Resource    # 리소스 기반 메트릭 (CPU, 메모리 등)
+    resource:
+      name: cpu       # CPU 사용률 기준
+      target:
+        type: Utilization         # 사용률(%) 기준으로 측정
+        averageUtilization: 70    # 모든 Pod의 평균 CPU 사용률이 70% 초과 시 스케일업
+  - type: Resource
+    resource:
+      name: memory    # 메모리 사용률 기준
+      target:
+        type: Utilization         # 사용률(%) 기준으로 측정
+        averageUtilization: 80    # 모든 Pod의 평균 메모리 사용률이 80% 초과 시 스케일업
+  
+  # 스케일링 동작 정책 (급격한 변화 방지)
+  behavior:
+    # 스케일다운 정책 (Pod 수 줄이기)
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5분간 안정화 대기 (급격한 다운스케일 방지)
+      policies:
+      - type: Percent     # 비율 기준
+        value: 50         # 한 번에 최대 50%까지만 줄임 (예: 10개 → 5개)
+        periodSeconds: 60 # 1분마다 평가
+    
+    # 스케일업 정책 (Pod 수 늘리기)  
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1분간 안정화 대기 (빠른 대응 위해 짧게 설정)
+      policies:
+      - type: Percent     # 비율 기준
+        value: 100        # 한 번에 최대 100%까지 늘림 (예: 2개 → 4개)
+        periodSeconds: 60 # 1분마다 평가
+
+---
+# aiagent-api 서비스용 HPA (백엔드 API 서버)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: aiagent-api-hpa
+  namespace: dev-aiagent
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: aiagent-api  # aiagent-api Deployment를 대상으로 함
+  
+  minReplicas: 2     # 최소 Pod 수
+  maxReplicas: 10    # 최대 Pod 수 (API 서버는 트래픽이 많아 더 크게 설정)
+  
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70    # CPU 70% 초과 시 스케일업
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80    # 메모리 80% 초과 시 스케일업
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5분 안정화
+      policies:
+      - type: Percent
+        value: 50         # 50%씩 줄임
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1분 안정화
+      policies:
+      - type: Percent
+        value: 100        # 100%씩 늘림 (빠른 확장)
+        periodSeconds: 60
+
+---
+# aiagent-system 서비스용 HPA (시스템 관리 페이지)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: aiagent-system-hpa
+  namespace: dev-aiagent
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: aiagent-system  # aiagent-system Deployment를 대상으로 함
+  
+  minReplicas: 1     # 최소 Pod 수  
+  maxReplicas: 5    # 최대 Pod 수 (관리자 페이지라 적당히 설정)
+  
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70    # CPU 70% 초과 시 스케일업
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization  
+        averageUtilization: 80    # 메모리 80% 초과 시 스케일업
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5분 안정화
+      policies:
+      - type: Percent
+        value: 50         # 50%씩 줄임
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1분 안정화  
+      policies:
+      - type: Percent
+        value: 100        # 100%씩 늘림
+        periodSeconds: 60
