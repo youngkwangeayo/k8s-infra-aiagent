@@ -28,11 +28,11 @@ spec:
             runAsUser: 999  # redis 사용자 ID로 컨테이너 실행 (공식 Redis 이미지의 기본 사용자)
           resources:   # 리소스 제한 (너무 많은 자원을 사용하지 않도록)
             requests:
-              cpu: "100m"         # 최소 0.1 CPU 요청
-              memory: "128Mi"     # 최소 128MB 메모리 요청
+              cpu: "200m"         # 최소 0.2 CPU 요청
+              memory: "512Mi"     # 최소 512MB 메모리 요청
             limits:
-              cpu: "500m"         # 최대 0.5 CPU 사용 제한
-              memory: "256Mi"     # 최대 256MB 메모리 제한
+              cpu: "800m"         # 최대 0.8 CPU 사용 제한
+              memory: "1Gi"       # 최대 1GB 메모리 제한
           args: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]  # AOF 방식으로 영속성 설정
           ports:
             - containerPort: 6379

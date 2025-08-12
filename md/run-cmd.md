@@ -15,8 +15,12 @@ kubectl config get-contexts
 kubectl config current-context
 # 클러스터에 접속할수있도록 로컬 큐브컨피그에 등록
 aws eks update-kubeconfig --region <리전> --name <클러스터 이름>
+# ex : aws eks update-kubeconfig --region ap-northeast-2 --name dev-aiagent-eks
+
 # 클러스터 전환
 kubectl config use-context <context-name>
+# ex : kubectl config use-context arn:aws:eks:ap-northeast-2:365485194891:cluster/dev-aiagent-eks
+
 # pcv 확인
 kubectl get pvc -A
 # StorageClass 확인  
@@ -115,7 +119,7 @@ kubectl apply -f infra/hpa.yaml
 
 ```bash
 
-kubectl get all -n dev-aiagent
+kubectl get all -n dev-aiagent 
 
 kubectl get pods -n dev-aiagent
 kubectl get pods -n dev-aiagent -w
@@ -165,6 +169,48 @@ kubectl delete storageclass gp2
 ```
 
 ---
+
+## 10. AWS Load Balancer Controller 설치 및 확인
+
+### 10-1. AWS Load Balancer Controller 설치
+```bash
+./aws/install-alb-controller-awscli.sh
+```
+
+또는 실행 권한을 먼저 부여한 후 실행:
+```bash
+chmod +x aws/install-alb-controller-awscli.sh
+./aws/install-alb-controller-awscli.sh
+```
+
+### 10-2. AWS Load Balancer Controller 설치 확인
+```bash
+# Deployment 상태 확인
+kubectl get deployment -n kube-system aws-load-balancer-controller
+
+# Pod 상태 확인
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+
+# 상세 정보 확인
+kubectl describe deployment aws-load-balancer-controller -n kube-system
+
+# 로그 확인
+kubectl logs -n kube-system deployment.apps/aws-load-balancer-controller
+
+# ServiceAccount 확인
+kubectl get serviceaccount aws-load-balancer-controller -n kube-system
+
+# ServiceAccount 상세 정보 (IAM Role 연결 확인)
+kubectl describe serviceaccount aws-load-balancer-controller -n kube-system
+
+```
+
+---
+# 이미지 재배포
+```bash
+# yaml 파일 재배포 (이미지 버전변경시)
+kubectl rollout restart deployment/aiagent-api -n dev-aiagent
+```
 
 ## ⚠️ 운영 주의사항
 

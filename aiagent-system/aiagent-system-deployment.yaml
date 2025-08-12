@@ -28,11 +28,11 @@ spec:
           image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-system:0.0.3
           resources: # (CPU/메모리 요청 및 제한)
             requests:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "150m"
+              memory: "192Mi"
             limits:
+              cpu: "600m"
               memory: "768Mi"
-              cpu: "500m"
           startupProbe: # 처음 뜰 때까지 보호
             httpGet:
               path: /

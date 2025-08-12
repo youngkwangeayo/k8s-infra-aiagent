@@ -14,8 +14,8 @@ spec:
     name: aiagent  # aiagent Deployment를 대상으로 함
   
   # Pod 수 범위 설정
-  minReplicas: 1    # 최소 Pod 수 (트래픽이 없어도 1개는 유지)
-  maxReplicas: 5   # 최대 Pod 수 (아무리 바빠도 10개를 넘지 않음)
+  minReplicas: 2    # 최소 Pod 수 (트래픽이 없어도 2개는 유지)
+  maxReplicas: 6   # 최대 Pod 수 (증가된 리소스로 더 많은 스케일링 가능)
   
   # 스케일링 기준 메트릭 정의
   metrics:
@@ -24,13 +24,13 @@ spec:
       name: cpu       # CPU 사용률 기준
       target:
         type: Utilization         # 사용률(%) 기준으로 측정
-        averageUtilization: 70    # 모든 Pod의 평균 CPU 사용률이 70% 초과 시 스케일업
+        averageUtilization: 60    # 리소스 증가로 임계값 낮춤 (더 빠른 반응)
   - type: Resource
     resource:
       name: memory    # 메모리 사용률 기준
       target:
         type: Utilization         # 사용률(%) 기준으로 측정
-        averageUtilization: 80    # 모든 Pod의 평균 메모리 사용률이 80% 초과 시 스케일업
+        averageUtilization: 70    # 메모리 임계값도 낮춤 (안정성 향상)
   
   # 스케일링 동작 정책 (급격한 변화 방지)
   behavior:
@@ -64,7 +64,7 @@ spec:
     name: aiagent-api  # aiagent-api Deployment를 대상으로 함
   
   minReplicas: 2     # 최소 Pod 수
-  maxReplicas: 10    # 최대 Pod 수 (API 서버는 트래픽이 많아 더 크게 설정)
+  maxReplicas: 8    # 최대 Pod 수 (API 서버는 트래픽이 많아 더 크게 설정)
   
   metrics:
   - type: Resource
@@ -72,13 +72,13 @@ spec:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 70    # CPU 70% 초과 시 스케일업
+        averageUtilization: 60    # CPU 60% 초과 시 스케일업 (더 빠른 반응)
   - type: Resource
     resource:
       name: memory
       target:
         type: Utilization
-        averageUtilization: 80    # 메모리 80% 초과 시 스케일업
+        averageUtilization: 70    # 메모리 70% 초과 시 스케일업 (안정성 향상)
   
   behavior:
     scaleDown:
@@ -107,8 +107,8 @@ spec:
     kind: Deployment
     name: aiagent-system  # aiagent-system Deployment를 대상으로 함
   
-  minReplicas: 1     # 최소 Pod 수  
-  maxReplicas: 5    # 최대 Pod 수 (관리자 페이지라 적당히 설정)
+  minReplicas: 2     # 최소 Pod 수  
+  maxReplicas: 6    # 최대 Pod 수 (관리자 페이지지만 안정성 확보)
   
   metrics:
   - type: Resource
@@ -116,13 +116,13 @@ spec:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 70    # CPU 70% 초과 시 스케일업
+        averageUtilization: 60    # CPU 60% 초과 시 스케일업 (더 빠른 반응)
   - type: Resource
     resource:
       name: memory
       target:
         type: Utilization  
-        averageUtilization: 80    # 메모리 80% 초과 시 스케일업
+        averageUtilization: 70    # 메모리 70% 초과 시 스케일업 (안정성 향상)
   
   behavior:
     scaleDown:
