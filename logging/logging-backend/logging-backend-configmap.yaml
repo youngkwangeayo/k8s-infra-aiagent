@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-backend-config
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: logging-backend
+    app.kubernetes.io/app: logging-backend
+    app.kubernetes.io/version: "1"
+    app.kubernetes.io/component: backend
+data:
+  config.json: |
+    {
+      "logLevel": "info",
+      "port": 8080,
+        LOG_BASE_DIR=/log
+    }

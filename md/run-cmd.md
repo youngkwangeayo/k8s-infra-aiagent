@@ -208,9 +208,16 @@ kubectl describe serviceaccount aws-load-balancer-controller -n kube-system
 ---
 # 이미지 재배포
 ```bash
+
+# 로컬캐싱된 버전을 사용할수있어서 새로받기위한 옵션 추가 리소스를 강제로 재생성
+kubectl apply -f deployment.yaml --force
+
 # yaml 파일 재배포 (이미지 버전변경시)
 kubectl rollout restart deployment/aiagent-api -n dev-aiagent
+
 ```
+
+
 
 ## ⚠️ 운영 주의사항
 

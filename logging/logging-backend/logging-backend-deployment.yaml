@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logging-backend
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: logging-backend
+    app.kubernetes.io/app: logging-backend
+    app.kubernetes.io/version: "1"
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logging-backend
+  template:
+    metadata:
+      labels:
+        app: logging-backend
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: logging-backend
+          image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/logging_backend:0.0.5
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          startupProbe: # 처음 뜰 때까지 보호
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 12
+          readinessProbe:  # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:    # 앱의 헬스체크 
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+              readOnly: true
+            - name: log-storage
+              mountPath: /var/log/logging_backend
+      volumes:
+        - name: config-volume
+          configMap:
+            name: logging-backend-config
+            items:
+              - key: config.json
+                path: config.json
+        - name: log-storage
+          persistentVolumeClaim:
+            claimName: logging-backend-pvc

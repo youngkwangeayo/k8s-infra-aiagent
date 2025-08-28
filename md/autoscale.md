@@ -1,5 +1,30 @@
 # 쿠버네티스 오토스케일링 동작 흐름
 
+1. 워커 노드 (Node)
+
+각 워커 노드의 kubelet이 cAdvisor(컨테이너 리소스 모니터링 내장 모듈)를 통해 CPU/메모리 사용량을 수집합니다.
+
+kubelet은 이 메트릭 데이터를 apiserver에 주기적으로 보고합니다.
+
+즉, “노드가 직접 자기 상태를 보고한다” 가 맞습니다.
+
+2. 마스터(Control Plane)
+
+마스터 노드가 직접 노드의 CPU/메모리를 들여다보는 게 아니라, kubelet이 보고한 데이터를 API 서버 → Metrics Server → HPA 컨트롤러가 모니터링합니다.
+
+Metrics Server
+
+kubelet에서 받은 리소스 사용량을 집계하여 API 형식(metrics.k8s.io)으로 노출합니다.
+
+Horizontal Pod Autoscaler(HPA) 컨트롤러
+
+Metrics API를 주기적으로 조회해서, 지정된 임계치(예: CPU 80%)를 초과하면 Deployment의 replicas 수를 증가/감소시킵니다.
+
+Cluster Autoscaler (EKS/GKE/AKS 같은 클라우드 환경)
+
+노드 풀(Node Group)을 감시하다가 Pod가 스케줄링 불가능(Pending) 상태가 지속되면 클라우드 API(AWS, GCP 등)에 요청해서 노드 자체를 늘리거나 줄입니다.
+
+
 ## 1️⃣ HPA 스케일 아웃 트리거
 - **주체**: HPA 컨트롤러 (`kube-controller-manager` 내부, 컨트롤 플레인)
 - **행동**:

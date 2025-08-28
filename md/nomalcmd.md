@@ -48,6 +48,9 @@ kubectl top node
 #컨테이너 진입
 kubectl exec -it aiagent-646c9c6f8d-4955g -n dev-aiagent -- /bin/bash
 
+#노드진입
+kubectl debug node/ip-172-31-133-189.ap-northeast-2.compute.internal -it --image=busybox
+
 # 팟로그확인 -f 옵션은 실시간 와치
 kubectl logs -n prod -l app=a -f
 ```

@@ -26,6 +26,7 @@ spec:
       containers: # 팟 내부  컨테이너 설정
         - name: aiagent-api
           image: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-api:latest
+          imagePullPolicy: Always # 임시로 어웨스 추가 파드생성때마다 최신이미지받음 추후 ci/cd로 명시
           resources: # (CPU/메모리 요청 및 제한)
             requests:
               cpu: "200m"
