@@ -1,1 +1,1 @@
-Release ENV : {{ .Release.Namespace }} Build Name : {{ .Release.Name }} 
+Release ENV : {{ .Release.Namespace }} Build Name : {{ .Release.Name }}  image : {{ .Values.image.tag }}
