@@ -1,0 +1,41 @@
+
+image: atlassian/default-image:2
+
+pipelines:
+  tags:
+    "*.*.*":
+      - step:
+          name: Build docker image
+          script:
+            - echo "your frist step maby ecr build"
+      - step:
+          name: Trigger k8s deploy pipe
+          script:
+            - |
+              curl -sS -D - \
+                -H "Authorization: Bearer $K8S_API_TOKEN" \
+                -H "Content-Type: application/json" \
+                -X POST "https://api.bitbucket.org/2.0/repositories/$K8S_REPO/pipelines/" \
+                -d '{
+                  "target": {
+                    "type": "pipeline_ref_target",
+                    "ref_type": "branch",
+                    "ref_name": "main",
+                    "selector": { "type": "custom", "pattern": "deploy-app" }
+                  },
+                  "variables": [
+                    { "key": "APP_NAME",  "value": "aiagent" },
+                    { "key": "IMAGE_TAG", "value": $BITBUCKET_TAG },
+                    { "key": "ENV",       "value": "dev" }
+                  ]
+                }'
+            # - pipe: atlassian/trigger-pipeline:5.10.1
+            #   variables:
+            #     BITBUCKET_ACCESS_TOKEN: $K8S_API_TOKEN
+            #     REPOSITORY: $K8S_REPO
+            #     REF_TYPE: "branch"
+            #     REF_NAME: "main"
+            #     CUSTOM_PIPELINE_NAME: "deploy-app"
+            #     PIPELINE_VARIABLES: >
+            #       [{ "key": "APP_NAME",  "value": "aiagent" },{ "key": "IMAGE_TAG", "value": $BITBUCKET_TAG },{"key":"ENV","value":"dev"}]
+            #     WAIT: "true"
