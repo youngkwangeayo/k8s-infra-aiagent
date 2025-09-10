@@ -1,0 +1,59 @@
+
+namespace: "dev-aiagent"
+
+
+autoscaling:
+  enabled: true
+  minReplicas: 2     # 최소 Pod 수  
+  maxReplicas: 8    # 최대 Pod 수 (관리자 페이지지만 안정성 확보)
+
+
+replicaCount: 2
+
+maxSurge: 1 # 새 팟 생성
+maxUnavailable: 1 # 생성되면 교체로 꺼질 팟 수
+
+image:
+  repository: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/aiagent-api
+  # This sets the pull policy for images.
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+
+
+# Deployment 의 spec.template.spec.containers.name[0] 안의 obj
+containerPort: 80
+resources: # (CPU/메모리 요청 및 제한)
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "800m"
+    memory: "1Gi"
+startupProbe: # 처음 뜰 때까지 보호
+  httpGet:
+    path: /
+    port: 80
+  periodSeconds: 5
+  failureThreshold: 12   # 최대 1분까지 대기 (5 * 12)
+readinessProbe: # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 5 # 첫 체크 전 대기 시간
+  periodSeconds: 10 # 체크 간격 (기본 10초)
+  failureThreshold: 3 # 몇 번 실패하면 'Not Ready'
+  timeoutSeconds: 5
+livenessProbe:  ##앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+# END Deployment 의 spec.containers
+
+
+
+

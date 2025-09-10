@@ -1,0 +1,14 @@
+
+namespaceApp: "prod-aiagent"
+
+ingress:
+  hosts:
+    - name: aiagent.nextpay.co.kr
+      service: aiagent-service
+      path: "/"
+    - name: aiagent-system.nextpay.co.kr
+      service: aiagent-system-service
+      path: "/"
+    - name: aiagent-api.nextpay.co.kr
+      service: aiagent-api-service
+      path: "/"

@@ -1,0 +1,54 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2  # HPA v2 API 사용 (CPU + 메모리 + 고급 기능 지원)
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "aiagent.fullname" . }}-hpa
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "aiagent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  # 스케일링 대상 지정
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "aiagent.fullname" . }}  # aiagent Deployment를 대상으로 함
+  
+  # Pod 수 범위 설정
+  minReplicas: {{ .Values.autoscaling.minReplicas }}    # 최소 Pod 수 (트래픽이 없어도 2개는 유지)
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}   # 최대 Pod 수 (증가된 리소스로 더 많은 스케일링 가능)
+  
+  # 스케일링 기준 메트릭 정의
+  metrics:
+  - type: Resource    # 리소스 기반 메트릭 (CPU, 메모리 등)
+    resource:
+      name: cpu       # CPU 사용률 기준
+      target:
+        type: Utilization         # 사용률(%) 기준으로 측정
+        averageUtilization: 60    # 리소스 증가로 임계값 낮춤 (더 빠른 반응)
+  - type: Resource
+    resource:
+      name: memory    # 메모리 사용률 기준
+      target:
+        type: Utilization         # 사용률(%) 기준으로 측정
+        averageUtilization: 70    # 메모리 임계값도 낮춤 (안정성 향상)
+  
+  # 스케일링 동작 정책 (급격한 변화 방지)
+  behavior:
+    # 스케일다운 정책 (Pod 수 줄이기)
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5분간 안정화 대기 (급격한 다운스케일 방지)
+      policies:
+      - type: Percent     # 비율 기준
+        value: 50         # 한 번에 최대 50%까지만 줄임 (예: 10개 → 5개)
+        periodSeconds: 60 # 1분마다 평가
+    
+    # 스케일업 정책 (Pod 수 늘리기)  
+    scaleUp:
+      stabilizationWindowSeconds: 60   # 1분간 안정화 대기 (빠른 대응 위해 짧게 설정)
+      policies:
+      - type: Percent     # 비율 기준
+        value: 100        # 한 번에 최대 100%까지 늘림 (예: 2개 → 4개)
+        periodSeconds: 60 # 1분마다 평가
+{{- end }}
+

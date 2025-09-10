@@ -1,0 +1,12 @@
+replicaCount: 1
+namespace: "logging"
+
+image:
+  repository: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/logging_backend
+  # This sets the pull policy for images.
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.0.5"
+
+storage: 10Gi
+

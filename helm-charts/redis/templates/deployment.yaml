@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{include "redis.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }} # 팟 몇개를 생성할건지
+  selector: # 이 Deployment가 관리할 Pod를 선택하는 기준
+    matchLabels:
+      app: {{ include "redis.name" . }}
+  template: # 실제 생성될 Pod의 템플릿 정의
+    metadata: # pod의 라벨링 service 가 Pod 라벨로 찾아감
+      labels:
+        app: {{ include "redis.name" . }}
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.securityContext.node }}
+      containers: # 팟 내부  컨테이너 설정
+        - name: {{ include "redis.name" . }}
+          args: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]  # AOF 방식으로 영속성 설정
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }} 
+          securityContext:
+            runAsUser: {{ .Values.securityContext.node }}
+          {{- with .Values.resources }}
+          resources:   # (CPU/메모리 요청 및 제한)
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:  # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe: #앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          
+          {{- if .Values.persistentVolumeClaim.create -}}
+          volumeMounts:
+            - mountPath: /data   # Redis가 데이터를 저장할 위치
+              name: redis-storage
+          {{- end }}
+      {{- if .Values.persistentVolumeClaim.create -}}
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: {{ include "redis.fullname" . }}-pvc  # PVC 이름과 연결
+      {{- end }}

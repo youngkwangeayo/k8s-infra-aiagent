@@ -1,0 +1,18 @@
+replicaCount: 2
+
+namespace: "prod-aiagent"
+
+image:
+  pullPolicy: IfNotPresent
+  tag: "0.0.2"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+
+
+configJson: |
+    {
+      "serviceEnv": "PROD"  
+    }

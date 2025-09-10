@@ -1,0 +1,40 @@
+replicaCount: 1
+namespace: "dev-aiagent"
+
+image:
+  repository: redis
+  # This sets the pull policy for images.
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+securityContext:
+  node: 999
+
+persistentVolumeClaim:
+  create: true
+
+# Deployment 의 spec.template.spec.containers.name[0] 안의 obj
+containerPort: 6379
+resources:   # 리소스 제한 (너무 많은 자원을 사용하지 않도록)
+  requests:
+    cpu: "200m"         # 최소 0.2 CPU 요청
+    memory: "512Mi"     # 최소 512MB 메모리 요청
+  limits:
+    cpu: "800m"         # 최대 0.8 CPU 사용 제한
+    memory: "1Gi"       # 최대 1GB 메모리 제한
+readinessProbe: # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+  initialDelaySeconds: 5    # 시작 후 5초 뒤부터 확인
+  periodSeconds: 5          # 5초마다 확인
+  exec:
+    command:
+    - redis-cli
+    - ping
+livenessProbe:  ##앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+  tcpSocket:
+    port: 6379
+  initialDelaySeconds: 20   # 시작 후 20초 뒤부터 확인
+  periodSeconds: 10         # 10초마다 확인
+  timeoutSeconds: 5
+# END Deployment 의 spec.containers
+

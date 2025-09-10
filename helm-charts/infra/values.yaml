@@ -1,0 +1,22 @@
+
+namespaceApp: "dev-aiagent"
+namespaceLogging: "logging"
+
+
+# ACM 인증서 연결 (ACM에서 발급받은 ARN 넣기)  N 개 일때 , 로 연결
+arn: arn:aws:acm:ap-northeast-2:365485194891:certificate/e885ba4f-8d7c-43f0-9923-d053338fc8b8
+ingress:
+  name: aiagent-ingress
+
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""

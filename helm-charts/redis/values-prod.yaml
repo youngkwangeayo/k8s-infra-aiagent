@@ -1,0 +1,7 @@
+
+namespace: prod-aiagent
+
+storage: 5Gi
+
+persistentVolumeClaim:
+  create: true

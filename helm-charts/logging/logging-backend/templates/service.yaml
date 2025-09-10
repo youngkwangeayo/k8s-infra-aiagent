@@ -1,0 +1,17 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "logging-backend.fullname" . }}-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logging-backend.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP        # 내부에서만 사용 (Ingress 통해 외부 노출 예정)
+  selector:
+    app: {{ include "logging-backend.name" . }}
+  ports:
+    - name: http
+      port: 8080           # 클러스터 내부에서 서비스가 노출할 포트
+      targetPort: {{ .Values.containerPort }}     # pod 내부의 컨테이너 포트

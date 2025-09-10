@@ -1,0 +1,48 @@
+replicaCount: 1
+namespace: "logging"
+
+image:
+  repository: 365485194891.dkr.ecr.ap-northeast-2.amazonaws.com/logging_backend
+  # This sets the pull policy for images.
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.0.5"
+
+securityContext:
+  node: 1000
+
+storage: 10Gi
+
+# Deployment 의 spec.template.spec.containers.name[0] 안의 obj
+containerPort: 8080
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+startupProbe: # 처음 뜰 때까지 보호
+  httpGet:
+    path: /healthz
+    port: 8080
+  periodSeconds: 5
+  failureThreshold: 12
+readinessProbe:  # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+livenessProbe:    # 앱의 헬스체크 
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+# END Deployment 의 spec.containers
+
+

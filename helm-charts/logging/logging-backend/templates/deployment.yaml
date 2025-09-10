@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "logging-backend.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logging-backend.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ .Values.replicaCount }} # 팟 몇개를 생성할건지
+  selector: # 이 Deployment가 관리할 Pod를 선택하는 기준
+    matchLabels:
+      app: {{ include "logging-backend.name" . }}
+  template: # 실제 생성될 Pod의 템플릿 정의
+    metadata: # pod의 라벨링 service 가 Pod 라벨로 찾아감
+      labels:
+        app: {{ include "logging-backend.name" . }}
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.securityContext.node }}
+      containers: # 팟 내부  컨테이너 설정
+        - name: {{ include "logging-backend.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }} 
+          securityContext:
+            runAsUser: {{ .Values.securityContext.node }}
+            runAsGroup: {{ .Values.securityContext.node }}
+          {{- with .Values.resources }}
+          resources:   # (CPU/메모리 요청 및 제한)
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.startupProbe }} 
+          startupProbe: # 처음 뜰 때까지 보호
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:  # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe: #앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          volumeMounts: # 컨테이너 볼륨 마운트
+            - name: config-volume
+              mountPath: /app/config
+              readOnly: true
+            - name: log-storage
+              mountPath: /var/log/logging_backend
+      volumes:  #팟의 볼륨 생성
+        - name: config-volume
+          configMap:
+            name: {{ include "logging-backend.fullname" . }}-config
+            items:
+              - key: config.json
+                path: config.json
+        - name: log-storage
+          persistentVolumeClaim:
+            claimName: {{ include "logging-backend.fullname" . }}-pvc
+

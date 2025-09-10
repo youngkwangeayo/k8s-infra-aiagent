@@ -1,0 +1,16 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redis.fullname" . }}-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP        # 내부에서만 사용 
+  selector:
+    app: {{ include "redis.name" . }}
+  ports:
+    - protocol: TCP
+      port: 6379           # 클러스터 내부에서 서비스가 노출할 포트
+      targetPort: {{ .Values.containerPort }}     # pod 내부의 컨테이너 포트

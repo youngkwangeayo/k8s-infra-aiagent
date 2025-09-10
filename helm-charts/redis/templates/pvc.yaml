@@ -1,0 +1,16 @@
+{{- if .Values.persistentVolumeClaim.create -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{- include "redis.fullname" . }}-pvc
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: {{ .Values.storage }}
+{{- end }}

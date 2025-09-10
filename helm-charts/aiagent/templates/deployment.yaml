@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aiagent.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "aiagent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.replicaCount }} # 팟 몇개를 생성할건지
+  strategy: # 애플리케이션을 배포(업데이트)할 때 어떤 방식으로 Pod를 교체할지 정의
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.maxSurge }} # 새 팟 생성
+      maxUnavailable: {{ .Values.maxUnavailable }} # 생성되면 교체로 꺼질 팟 수
+  selector: # 이 Deployment가 관리할 Pod를 선택하는 기준
+    matchLabels:
+      app: {{ include "aiagent.name" . }}
+  template: # 실제 생성될 Pod의 템플릿 정의
+    metadata: # pod의 라벨링 service 가 Pod 라벨로 찾아감
+      labels:
+        app: {{ include "aiagent.name" . }}
+    spec:
+      containers: # 팟 내부  컨테이너 설정
+        - name: {{ include "aiagent.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }} 
+          {{- with .Values.resources }}
+          resources:   # (CPU/메모리 요청 및 제한)
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.startupProbe }} 
+          startupProbe: # 처음 뜰 때까지 보호
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:  # 체크안되면 로드밸런서(ClusterIP, Service)트래픽안보냄.
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe: #앱의 헬스체크 . 헬싱안될시 pod안의 컨테이너 kill 하고 재시작 (컨테이너자가복구)
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          volumeMounts: # 컨테이너 볼륨 마운트
+            - name: config-volume
+              mountPath: /usr/src/app/conf # 여기에 마운트됨 도커파일 WORKDIR 경로확인
+              readOnly: true
+      volumes:  #팟의 볼륨 생성
+        - name: config-volume
+          configMap:
+            name: {{ include "aiagent.fullname" . }}-config
+            items:
+              - key: config.js     # ConfigMap의 키 이름
+                path: config.js   # 실제로 /usr/src/app/conf/config.js 으로 보임
