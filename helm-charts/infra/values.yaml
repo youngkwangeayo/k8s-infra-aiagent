@@ -2,6 +2,7 @@
 namespaceApp: "dev-aiagent"
 namespaceLogging: "logging"
 
+# arn: arn:aws:acm:ap-northeast-2:365485194891:certificate/e885ba4f-8d7c-43f0-9923-d053338fc8b8, arn:aws:acm:ap-northeast-2:365485194891:certificate/4b2094ef-fd6b-4ce1-ac47-9d10bf0e9590
 
 # ACM 인증서 연결 (ACM에서 발급받은 ARN 넣기)  N 개 일때 , 로 연결
 arn: arn:aws:acm:ap-northeast-2:365485194891:certificate/e885ba4f-8d7c-43f0-9923-d053338fc8b8
